@@ -654,46 +654,39 @@ elif page == "Analiz Geçmişi":
 elif page == "Model Performansı":
     st.markdown('<div class="section-header" style="font-size: 1.8rem;">Model Performansı</div>', unsafe_allow_html=True)
 
-    csv_path = os.path.join(config.REPORTS_DIR, "evaluation_results.csv")
+    summary_path = os.path.join(config.REPORTS_DIR, "evaluation_summary.csv")
+    per_class_path = os.path.join(config.REPORTS_DIR, "evaluation_per_class.csv")
 
     # 1. Evaluation Results (Gerçek Metrikler)
-    if os.path.exists(csv_path):
+    if os.path.exists(summary_path) and os.path.exists(per_class_path):
         try:
-            eval_df = pd.read_csv(csv_path)
+            summary_df = pd.read_csv(summary_path)
+            class_df = pd.read_csv(per_class_path)
 
-            empty_idx = eval_df[eval_df.isnull().all(axis=1)].index
+            cols = st.columns(4)
+            for idx, metric_name in enumerate(
+                ["Accuracy", "Precision (Macro)", "Recall (Macro)", "F1-Score (Macro)"]
+            ):
+                row = summary_df.loc[summary_df["Metrik"] == metric_name, "Değer"]
+                if not row.empty:
+                    with cols[idx]:
+                        st.markdown(f"""
+                        <div class="metric-container" style="margin-bottom: 1rem;">
+                            <div class="metric-label">{metric_name}</div>
+                            <div class="metric-value" style="color: #60a5fa;">{float(row.iloc[0]):.4f}</div>
+                        </div>
+                        """, unsafe_allow_html=True)
 
-            if len(empty_idx) > 0:
-                split_idx = empty_idx[0]
-                general_metrics = eval_df.iloc[:split_idx]
-                class_metrics = eval_df.iloc[split_idx+2:].copy()
-                class_metrics.columns = ["Class", "Precision", "Recall", "F1-Score"]
-
-                cols = st.columns(4)
-                idx = 0
-                for _, row in general_metrics.iterrows():
-                    if row[0] in ["Accuracy", "Precision (Macro)", "Recall (Macro)", "F1-Score (Macro)"]:
-                        with cols[idx % 4]:
-                            st.markdown(f"""
-                            <div class="metric-container" style="margin-bottom: 1rem;">
-                                <div class="metric-label">{row[0]}</div>
-                                <div class="metric-value" style="color: #60a5fa;">{float(row[1]):.4f}</div>
-                            </div>
-                            """, unsafe_allow_html=True)
-                        idx += 1
-
-                st.markdown("### Class Performance")
-                for c in ["Precision", "Recall", "F1-Score"]:
-                    class_metrics[c] = class_metrics[c].astype(float).map("{:.4f}".format)
-                st.table(class_metrics)
-
-            else:
-                st.dataframe(eval_df, use_container_width=True)
+            st.markdown("### Class Performance")
+            display_df = class_df.copy()
+            for c in ["Precision", "Recall", "F1-Score"]:
+                display_df[c] = display_df[c].astype(float).map("{:.4f}".format)
+            st.table(display_df)
 
         except Exception as e:
             st.error(f"Metrikler okunurken hata oluştu: {e}")
     else:
-        st.info("Değerlendirme sonuçları (evaluation_results.csv) bulunamadı.")
+        st.info("Değerlendirme sonuçları (evaluation_summary.csv / evaluation_per_class.csv) bulunamadı.")
 
     st.markdown("<hr style='border-color: #334155;'>", unsafe_allow_html=True)
 

@@ -228,21 +228,23 @@ def save_metrics(metrics: Dict,
 
     print(f"[SAVE] Metin raporu kaydedildi: {txt_path}")
 
-    # --- CSV raporu ---
-    csv_path = os.path.join(reports_dir, "evaluation_results.csv")
-    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+    # --- Genel metrikler CSV'si ---
+    summary_path = os.path.join(reports_dir, "evaluation_summary.csv")
+    with open(summary_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
-
-        # Genel metrikler
         writer.writerow(["Metrik", "Değer"])
         writer.writerow(["Accuracy", f"{metrics['accuracy']:.4f}"])
         writer.writerow(["Precision (Macro)", f"{metrics['precision_macro']:.4f}"])
         writer.writerow(["Recall (Macro)", f"{metrics['recall_macro']:.4f}"])
         writer.writerow(["F1-Score (Macro)", f"{metrics['f1_macro']:.4f}"])
         writer.writerow(["F1-Score (Weighted)", f"{metrics['f1_weighted']:.4f}"])
-        writer.writerow([])
 
-        # Sınıf bazında metrikler
+    print(f"[SAVE] Özet CSV kaydedildi: {summary_path}")
+
+    # --- Sınıf bazında metrikler CSV'si ---
+    per_class_path = os.path.join(reports_dir, "evaluation_per_class.csv")
+    with open(per_class_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
         writer.writerow(["Sınıf", "Precision", "Recall", "F1-Score"])
         for i, cls_name in enumerate(class_names):
             writer.writerow([
@@ -252,7 +254,7 @@ def save_metrics(metrics: Dict,
                 f"{metrics['f1_per_class'][i]:.4f}",
             ])
 
-    print(f"[SAVE] CSV raporu kaydedildi: {csv_path}")
+    print(f"[SAVE] Sınıf bazlı CSV kaydedildi: {per_class_path}")
 
 
 # =============================================================================
